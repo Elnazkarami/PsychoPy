@@ -1,0 +1,37 @@
+from psychopy import visual, core, event, gui
+
+# Create a PsychoPy window
+win = visual.Window([800, 600], color=[1, 1, 1], units='pix')
+
+# Create a slider
+slider = visual.Slider(win, ticks=(0, 1), labels=['0', '1'], size=(400, 20),
+                       pos=(0, 0), style='rating', color='black', fillColor='red')
+
+# Instructions
+instructions = visual.TextStim(win, text='Drag the slider to adjust the value.\nPress "q" to quit.',
+                               pos=(0, 250), color='black')
+
+# Main loop
+running = True
+while running:
+    instructions.draw()
+    slider.draw()
+    win.flip()
+
+    # Check for mouse clicks
+    mouse = event.Mouse()
+    if mouse.isPressedIn(slider):
+        slider.setRating(mouse.getPos()[0] / slider.size[0])
+        
+    # Check for exit condition
+    keys = event.getKeys()
+    if 'q' in keys:
+        running = False
+
+# Get the slider value
+slider_value = slider.getRating()
+print(f'Slider Value: {slider_value}')
+
+# Cleanup
+win.close()
+core.quit()
