@@ -1,0 +1,7 @@
+# Session output written by slider_bar_psychopy.py
+data/
+
+__pycache__/
+*.pyc
+.venv/
+.DS_Store

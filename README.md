@@ -1,107 +1,107 @@
-# PsychoPy Codes for Human Psychophysics Test Design
+# PsychoPy Slider-Rating Demonstration
 
-This repository contains a collection of useful PsychoPy scripts for designing and implementing psychophysical tests in human research. These scripts cover various aspects of test design, including interactive elements, response collection, and data handling.
+A small PsychoPy script that presents three neutral prompts, collects a rating on a
+continuous 0–1 slider for each, and saves the confirmed responses to a CSV file.
+It is a demonstration of slider response collection, not a validated experiment.
 
-##  Project Overview
+![Slider rating screen](docs/slider_screenshot.png)
 
-PsychoPy is a powerful tool for creating experiments in Python, and this repository provides example codes to assist in the development of psychophysical tests. The provided scripts can be used to create interactive stimuli, collect participant responses, and analyze psychophysical data.
+*Screenshot of the third prompt, rendered by PsychoPy 2026.2.4 during the simulated
+test run described below. The marker position (0.65) was set by the test script, not by
+a participant.*
 
-##  Repository Contents
+## Repository contents
 
-- **`slider_bar_psychopy.py`**: Example script for creating an interactive slider bar where users can adjust a value by dragging the slider handle.
-- **`example_2.py`**: (Add other example scripts here with brief descriptions)
-- **`example_3.py`**: (Add other example scripts here with brief descriptions)
+| Path | Purpose |
+|------|---------|
+| [slider_bar_psychopy.py](slider_bar_psychopy.py) | The demonstration script |
+| [tests/simulated_session.py](tests/simulated_session.py) | Runs the script with scripted mouse/keyboard input and checks the CSV |
+| [examples/demo_simulated_session.csv](examples/demo_simulated_session.csv) | **Demonstration data** from one simulated run, not a participant |
+| [docs/slider_screenshot.png](docs/slider_screenshot.png) | Screenshot shown above |
+| [LICENSE](LICENSE) | MIT licence |
 
-##  Requirements
+## Requirements
 
-- **Python**: Ensure you have Python installed.
-- **PsychoPy**: Download and install PsychoPy. For installation instructions, visit [PsychoPy Installation](https://www.psychopy.org/download.html).
+- Python 3 with PsychoPy. Tested with PsychoPy **2026.2.4** on Python 3.12.6, macOS 27.0.1
+  (see [Verification](#verification)).
 
-##  How to Use
+```bash
+pip install psychopy
+```
 
-1. **Install PsychoPy**: Install PsychoPy via pip if you haven’t already:
+## Running the task
 
-   pip install psychopy
-  
-2. **Run the Script**:
-   - Save the script you want to use (e.g., `slider_bar_psychopy.py`) to your local machine.
-   - Navigate to the directory containing the script.
-   - Run the script using Python:
- 
-     python slider_bar_psychopy.py
+```bash
+python slider_bar_psychopy.py
+```
 
+For each prompt:
 
-3. **Interact with the Test Elements**:
-   - Follow the instructions provided in the script to interact with the test elements.
-   - For the slider bar example, click and drag the slider handle to adjust the value.
-   - Press 'q' to quit the experiment.
+- **Click or drag** on the line to choose a rating. The scale is continuous
+  (`granularity=0`) from 0 to 1, and the rating is registered when the mouse button is
+  released.
+- **Enter** confirms the rating and moves to the next prompt. It does nothing until a
+  rating has been chosen. A rating of 0 is a valid response.
+- **Escape** aborts the task. Trials already completed are kept.
 
-##  Example Script: Slider Bar
+The slider is reset at the start of each trial, so a previous response never carries over.
+The script relies on PsychoPy's own `Slider` mouse handling (`draw()` and `getRating()`).
+It does not compute the rating from the mouse position itself.
 
-### Description
+## Output
 
-The `slider_bar_psychopy.py` script demonstrates how to create an interactive slider bar using PsychoPy. The slider responds to mouse input, allowing users to adjust a value by dragging the handle.
+Each run writes `data/slider_ratings_<session_id>.csv`. The session ID is a timestamp
+plus a random suffix, and the file is opened in exclusive-create mode, so a second run
+never overwrites the first. Each trial's row is written and flushed as soon as the trial ends.
 
-### Script Overview
+| Column | Meaning |
+|--------|---------|
+| `session_id` | Identifies the run |
+| `trial_id` | Trial number within the run (1–3) |
+| `prompt_id` | Identifies the question (`p1`–`p3`) |
+| `prompt_text` | The question shown |
+| `rating` | Confirmed rating, 0–1 (empty if aborted) |
+| `confirmation_rt_s` | Seconds from the first frame showing the prompt to the Enter press that confirmed it |
+| `last_rating_rt_s` | PsychoPy's `slider.getRT()`: seconds from the slider's first frame to the mouse release that set the confirmed rating. This is **not** the confirmation time |
+| `status` | `completed`, or `aborted` for the trial on which Escape was pressed |
 
-1. **Initialize PsychoPy**: Opens a PsychoPy window.
-2. **Create the Slider**: Uses `visual.Slider` to create an interactive slider.
-3. **Instructions**: Displays instructions using `visual.TextStim`.
-4. **Main Loop**:
-   - Draws the slider and updates its value based on mouse position.
-   - Checks for the 'q' key to exit the loop.
-5. **Get the Slider Value**: Prints the current slider value.
-6. **Cleanup**: Closes the window and exits.
+Both times come from the frame loop, so they have frame-level resolution (about 16.7 ms
+at 60 Hz), and keypresses are polled once per frame. Timing precision has not been
+measured. Do not treat these values as precise reaction times.
 
-### Example Code
+Example (demonstration data from the simulated run, so the times are a few frames):
 
-Here’s the full code for the slider bar example:
+```csv
+session_id,trial_id,prompt_id,prompt_text,rating,confirmation_rt_s,last_rating_rt_s,status
+20261013-145202-21b566,1,p1,How easy is this sentence to read?,0.0000,0.0500,0.0340,completed
+20261013-145202-21b566,2,p2,How warm does the room feel right now?,1.0000,0.0251,0.0169,completed
+20261013-145202-21b566,3,p3,How much do you like the colour blue?,,,,aborted
+```
 
+## Verification
 
-from psychopy import visual, core, event, gui
+**Automated (simulated input).** [tests/simulated_session.py](tests/simulated_session.py) runs
+the unmodified script in a real PsychoPy window. It replaces only the slider's mouse and
+PsychoPy's key reader with a frame-by-frame script, then checks the saved CSV:
 
-# Create a PsychoPy window
-win = visual.Window([800, 600], color=[1, 1, 1], units='pix')
+```bash
+python tests/simulated_session.py
+```
 
-# Create a slider
-slider = visual.Slider(win, ticks=(0, 1), labels=['0', '1'], size=(400, 20),
-                       pos=(0, 0), style='rating', color='black', fillColor='red')
+Run on PsychoPy 2026.2.4, Python 3.12.6, macOS 27.0.1. All of the following passed:
 
-# Instructions
-instructions = visual.TextStim(win, text='Drag the slider to adjust the value.\nPress "q" to quit.',
-                               pos=(0, 250), color='black')
+- [x] Left endpoint gives 0 and right endpoint gives 1
+- [x] A rating of 0 can be confirmed
+- [x] Enter before any selection is ignored
+- [x] The slider resets between trials (Enter at the start of trial 2 is ignored)
+- [x] Escape aborts, and completed trials remain in the CSV
+- [x] The CSV matches the scripted selections, and two runs write two separate files
 
-# Main loop
-running = True
-while running:
-    instructions.draw()
-    slider.draw()
-    win.flip()
+**Manual (real mouse and keyboard).** Not yet done. Repeat the checks above by hand and
+record the PsychoPy version and OS used here.
 
-    # Check for mouse clicks
-    mouse = event.Mouse()
-    if mouse.isPressedIn(slider):
-        slider.setRating(mouse.getPos()[0] / slider.size[0])
-        
-    # Check for exit condition
-    keys = event.getKeys()
-    if 'q' in keys:
-        running = False
-
-# Get the slider value
-slider_value = slider.getRating()
-print(f'Slider Value: {slider_value}')
-
-# Cleanup
-win.close()
-core.quit()
-
-
-##  Contributing
-
-Contributions are welcome! If you have additional PsychoPy scripts or improvements, please fork the repository, make changes, and submit a pull request. For significant changes, open an issue to discuss your proposed modifications.
+Timing accuracy was not measured in either case.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+The code is released under the [MIT License](LICENSE).
